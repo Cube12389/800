@@ -49,23 +49,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $targetPath = $uploadDir . $filename;
         
         if (move_uploaded_file($_FILES['photo']['tmp_name'], $targetPath)) {
-            try {
-                $db = getDB();
-                $albumId = 1; // 默认班级相册
-                $description = $_POST['description'] ?? '';
-                $visibility = $_POST['visibility'] ?? 'public'; // 默认公开
-                
-                $stmt = $db->prepare("INSERT INTO photos (album_id, filename, original_filename, description, visibility, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$albumId, $filename, $originalFilename, $description, $visibility, $currentUserId]);
-                
-                $success = '照片上传成功';
-            } catch (PDOException $e) {
-                $error = '保存照片信息失败: ' . $e->getMessage();
-                unlink($targetPath); // 删除已上传的文件
+                try {
+                    $db = getDB();
+                    $albumId = 1; // 默认班级相册
+                    $description = $_POST['description'] ?? '';
+                    $visibility = $_POST['visibility'] ?? 'public'; // 默认公开
+                    
+                    $stmt = $db->prepare("INSERT INTO photos (album_id, filename, original_filename, description, visibility, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$albumId, $filename, $originalFilename, $description, $visibility, $currentUserId]);
+                    
+                    $success = '照片上传成功';
+                    // 记录操作日志
+                    logUserAction('upload_photo', "上传照片成功，文件名: {$originalFilename}");
+                } catch (PDOException $e) {
+                    $error = '保存照片信息失败: ' . $e->getMessage();
+                    unlink($targetPath); // 删除已上传的文件
+                }
+            } else {
+                $error = '上传照片失败';
             }
-        } else {
-            $error = '上传照片失败';
-        }
     } else {
         $error = '请选择要上传的照片';
     }
@@ -99,6 +101,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete_photo' && isset($_GET[
                 $stmt->execute([$photoId]);
                 
                 $success = '照片删除成功';
+                // 记录操作日志
+                logUserAction('delete_photo', "删除照片成功，ID: {$photoId}");
             } else {
                 $error = '照片不存在或无权限删除';
             }
@@ -130,6 +134,11 @@ function getAllPhotos($isClassMember) {
 }
 
 $photos = getAllPhotos($isClassMember);
+
+// 记录游客访问日志
+if (!isLoggedIn()) {
+    logUserAction('visit_class_album', "游客访问班级相册");
+}
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">

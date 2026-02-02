@@ -111,9 +111,56 @@ function deleteSensitiveWord($id) {
     try {
         $db = getDB();
         $stmt = $db->prepare("DELETE FROM sensitive_words WHERE id = ?");
-        return $stmt->execute([$id]);
+        $result = $stmt->execute([$id]);
+        
+        // 记录操作日志
+        if ($result) {
+            logAdminAction('delete_sensitive_word', "删除敏感词 ID: {$id}");
+        }
+        
+        return $result;
     } catch (PDOException $e) {
         return false;
     }
 }
-?>
+
+// 记录管理员操作日志
+function logAdminAction($action, $description) {
+    try {
+        $db = getDB();
+        $adminId = getCurrentAdminId();
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '未知';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '未知';
+        
+        $stmt = $db->prepare("INSERT INTO admin_logs (admin_id, action, description, ip_address, user_agent) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$adminId, $action, $description, $ipAddress, $userAgent]);
+        
+        return true;
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+
+// 获取操作日志
+function getAdminLogs($limit = 100, $offset = 0) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT al.*, a.username FROM admin_logs al LEFT JOIN admins a ON al.admin_id = a.id ORDER BY al.created_at DESC LIMIT ? OFFSET ?");
+        $stmt->execute([$limit, $offset]);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+// 获取操作日志总数
+function getAdminLogsCount() {
+    try {
+        $db = getDB();
+        $stmt = $db->query("SELECT COUNT(*) FROM admin_logs");
+        return $stmt->fetchColumn();
+    } catch (PDOException $e) {
+        return 0;
+    }
+}
+?>  

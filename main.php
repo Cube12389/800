@@ -4,13 +4,32 @@ require_once 'news_column_config.php';
 
 // 获取最新的3个新闻
 $latestNews = array_slice(getVisibleNews(), 0, 3);
+
+// 记录游客访问日志
+if (!isLoggedIn()) {
+    logUserAction('visit_home', "游客访问首页");
+}
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <link rel="icon" href="asstes/favicon.ico" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>班级网站</title>
     <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
         /* 内容区域样式 */
         .hero {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

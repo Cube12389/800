@@ -17,6 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 创建报社
     $newspaperId = createNewspaper($currentUserId, $name, $description);
     if ($newspaperId) {
+        // 记录操作日志
+        logUserAction('create_newspaper', "创建报社成功，名称: {$name}");
+        
         // 重定向到报社主页
         redirect('newspaper_home.php?id=' . $newspaperId);
     } else {

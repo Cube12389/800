@@ -42,8 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // 创建管理员
                     $passwordHash = hashPassword($password);
                     $stmt = $db->prepare("INSERT INTO admins (username, password, is_super) VALUES (?, ?, ?)");
-                    $stmt->execute([$username, $passwordHash, 0]); // 默认为普通管理员
-                    $success = '管理员创建成功';
+                    $result = $stmt->execute([$username, $passwordHash, 0]); // 默认为普通管理员
+                    
+                    if ($result) {
+                        $success = '管理员创建成功';
+                        // 记录操作日志
+                        logAdminAction('create_admin', "创建管理员: {$username}");
+                    }
                 }
             } catch (PDOException $e) {
                 $error = '创建管理员失败: ' . $e->getMessage();
@@ -74,6 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $result = $stmt->execute([$adminId]);
                     if ($result) {
                         $success = '管理员删除成功';
+                        // 记录操作日志
+                        logAdminAction('delete_admin', "删除管理员 ID: {$adminId}");
                     } else {
                         $error = '删除管理员失败';
                     }
@@ -344,6 +351,8 @@ $admins = getAllAdmins();
                 <li><a href="user_manage.php">用户管理</a></li>
                 <li><a href="dynamic_manage.php">动态管理</a></li>
                 <li><a href="sensitive_words.php">敏感词管理</a></li>
+                <li><a href="admin_logs.php">操作日志</a></li>
+                <li><a href="user_logs.php">用户日志</a></li>
                 <li><a href="logout.php">退出登录</a></li>
             </ul>
         </div>

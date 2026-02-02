@@ -177,6 +177,8 @@ $currentAdmin = getCurrentAdmin();
                 <li><a href="user_manage.php">用户管理</a></li>
                 <li><a href="dynamic_manage.php">动态管理</a></li>
                 <li><a href="sensitive_words.php">敏感词管理</a></li>
+                <li><a href="admin_logs.php">操作日志</a></li>
+                <li><a href="user_logs.php">用户日志</a></li>
                 <li><a href="logout.php">退出登录</a></li>
             </ul>
         </div>

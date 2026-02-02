@@ -34,6 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 创建新闻
     $newsId = createNews($newspaperId, $title, $content, $visibilityType, $visibilityUsers);
     if ($newsId) {
+        // 记录操作日志
+        logUserAction('create_news', "发布新闻成功，标题: {$title}");
+        
         // 重定向到新闻详情页
         redirect('news_detail.php?id=' . $newsId);
     } else {

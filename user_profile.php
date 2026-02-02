@@ -70,6 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->commit();
             
             $success = '用户信息更新成功';
+            // 记录操作日志
+            logUserAction('update_profile', "更新个人资料成功");
             
             // 重新获取用户信息
             $userInfo = getUserInfo($userId);

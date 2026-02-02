@@ -7,6 +7,11 @@ if (isLoggedIn()) {
     redirect('index.php');
 }
 
+// 记录游客访问日志
+if (!isLoggedIn()) {
+    logUserAction('visit_register', "游客访问注册页面");
+}
+
 $error = '';
 $success = '';
 
@@ -86,6 +91,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // 设置cookie
                     setcookie('token', $token, time() + TOKEN_EXPIRE_TIME, '/', '', false, true);
+                    
+                    // 注册成功，记录操作日志
+                    logUserAction('register', "用户注册成功，用户名: {$username}");
                     
                     // 注册成功，重定向到首页
                     redirect('index.php');

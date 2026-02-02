@@ -13,6 +13,11 @@ $userNewspapers = [];
 if ($currentUserId) {
     $userNewspapers = getUserNewspapers($currentUserId);
 }
+
+// 记录游客访问日志
+if (!isLoggedIn()) {
+    logUserAction('visit_news_column', "游客访问专栏页面");
+}
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">

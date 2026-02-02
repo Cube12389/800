@@ -32,6 +32,11 @@ if (isset($_COOKIE['token'])) {
     }
 }
 
+// 记录游客访问日志
+if (!isLoggedIn()) {
+    logUserAction('visit_login', "游客访问登录页面");
+}
+
 $error = '';
 
 // 处理登录表单提交
@@ -66,6 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // 设置cookie
                 setcookie('token', $token, time() + TOKEN_EXPIRE_TIME, '/', '', false, true);
+                
+                // 登录成功，记录操作日志
+                logUserAction('login', "用户登录成功");
                 
                 // 登录成功，重定向到首页
                 redirect('index.php');

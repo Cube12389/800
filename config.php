@@ -217,6 +217,12 @@ function logout() {
             $db = getDB();
             $stmt = $db->prepare("DELETE FROM user_tokens WHERE user_id = ? AND token = ?");
             $stmt->execute([$payload['user_id'], $token]);
+            
+            // 记录用户注销日志
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '未知';
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '未知';
+            $stmt = $db->prepare("INSERT INTO user_logs (user_id, operation_type, action, description, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$payload['user_id'], 'user', 'logout', "用户注销成功", $ipAddress, $userAgent]);
         }
         
         // 删除cookie
@@ -242,6 +248,72 @@ function requirePermission($permission) {
     if (!currentUserHasPermission($permission)) {
         // 没有权限，重定向到首页或显示错误页面
         redirect('index.php');
+    }
+}
+
+// 记录用户操作日志
+function logUserAction($action, $description) {
+    try {
+        $db = getDB();
+        $userId = getCurrentUserId();
+        $operationType = $userId ? 'user' : 'guest';
+        
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '未知';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '未知';
+        
+        $stmt = $db->prepare("INSERT INTO user_logs (user_id, operation_type, action, description, ip_address, user_agent) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$userId, $operationType, $action, $description, $ipAddress, $userAgent]);
+        
+        return true;
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+
+// 获取用户操作日志
+function getUserLogs($userId, $limit = 100, $offset = 0) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT * FROM user_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        $stmt->execute([$userId, $limit, $offset]);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+// 获取用户操作日志总数
+function getUserLogsCount($userId) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT COUNT(*) FROM user_logs WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn();
+    } catch (PDOException $e) {
+        return 0;
+    }
+}
+
+// 获取所有用户操作日志（管理员用）
+function getAllUserLogs($limit = 100, $offset = 0) {
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("SELECT ul.*, u.username FROM user_logs ul LEFT JOIN users u ON ul.user_id = u.id ORDER BY ul.created_at DESC LIMIT ? OFFSET ?");
+        $stmt->execute([$limit, $offset]);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+// 获取所有用户操作日志总数（管理员用）
+function getAllUserLogsCount() {
+    try {
+        $db = getDB();
+        $stmt = $db->query("SELECT COUNT(*) FROM user_logs");
+        return $stmt->fetchColumn();
+    } catch (PDOException $e) {
+        return 0;
     }
 }
 ?>
